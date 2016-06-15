@@ -1,0 +1,553 @@
+Git Notes
+=========
+
+git config
+----------
+
+Git comes with a tool called git config that lets you get and set configuration variables that control all aspects of how git looks and operates
+
+/etc/gitconfig: contains values for every user on the system and all their repositories
+pass the --system option to git config to configure this file
+
+~/.gitconfig or ~/.config/git/config: Specific to your user
+pass the --global option to git config to configure this file
+
+config file in the Git directory i.e. .git/config: Specific to that single repository
+just use git config to configure this file
+
+
+Setting git default editor
+--------------------------
+
+e.g. 
+
+git config --global core.editor.emacs
+
+
+Checking your git settings
+--------------------------
+
+list everything:
+
+git config --list
+
+list a specific value
+
+git config <key>
+
+
+Getting help
+------------
+
+Three ways to do this
+
+1. git help <verb>
+2. get <verb> --help
+3. man git <verb>
+
+e.g. git help config
+
+
+Initializing a Repository in an Existing Directory
+--------------------------------------------------
+
+If you are starting to track an existing project in Git, you need to go to the project's directory and type:
+
+git init
+
+This creates a new subdirectory named .git that contains all of your necessary repository files – a Git repository skeleton. At this point, nothing in your project is tracked yet. If you want to start version-controlling existing
+files (as opposed to an empty directory), you should probably begin tracking those files and do an initial commit.
+
+e.g.
+
+git add *.c
+git add LICENSCE
+git commit -m 'Initial project version'
+
+Cloning an Existing Repository
+------------------------------
+
+If you want to get a copy of an existing Git repository that you want to contribute to, do as follows:
+
+$ git clone https://github.com/libgit2/libgit2
+
+This will create a directory called libgit2, initializes a .git directory inside it and pulls down the data for that repository and checks out the working copy of the latest version.
+
+If you want to clone the directory in a different directory do:
+
+$ git clone https://github.com/libgit2/libgit2 mylibgit
+
+Git has a number of different transfer protocols you can use. The previous example uses the https:// protocol, but you may also see git:// or user@server:path/to/repo.git, which uses the SSH transfer protocol.
+
+
+Git Work Flow
+-------------
+
+For untracked files
+
+Untracked---------add----------->Staged---------commit-------->Unmodified. At this point it is being tracked.
+
+For tracked files
+
+Unmodified----->Edit the file----->Modified--------add-------->Staged-------commit--------->Unmodified
+
+
+Checking the status of files
+----------------------------
+
+git status
+
+To see the short status do:
+
+git status -s
+
+Files that have not been tracked have ?? next to them, modified files have M, and staged files have A. The first character is for the status in the Modified stage, the second character is for the status in the Staged stage.
+
+
+Staging a modified file
+-----------------------
+
+git add <file>
+
+Note: add is multi-purpose in that you use it to add untracked files and modified files to the staged directory.
+
+If you added a file to the staged directory and then modified it, you will need to re-add it to the staged directory so that the latest changes are committed otherwise only the changes from the last add command will be committed.
+
+$ git status -s M README
+MM Rakefile
+A  lib/git.rb
+M  lib/simplegit.rb
+?? LICENSE.txt
+
+There are two columns to the output, the left hand column indicates the status of the staging area, and the right hand column indicates the status of the working tree.
+
+Note: After you have modified a file, you have to add it to the stage directory and commit it. You can't commit it directly like svn. To bypass the staging stage, use the -a option of git commit.
+
+Ignoring Files
+--------------
+
+Set up a .gitignore file to ignore patterns of files.
+
+The rules for the patterns you can put in the .gitignore file are as follows:
+• Blank lines or lines starting with # are ignored.
+• Standard glob patterns work.
+• You can start patterns with a forward slash (/) to avoid recursivity.
+• You can end patterns with a forward slash (/) to specify a directory.
+• You can negate a pattern by starting it with an exclamation point (!).
+
+Removing Files
+--------------
+
+To remove a file from Git, you have to remove it from your tracked files (more accurately, remove it from your staging area) and then commit. The git rm command does that, and also removes the file from your working directory so
+you don’t see it as an untracked file the next time around.
+
+git rm <file>
+
+Another useful thing is to keep the file in your working tree but remove it from the staging area, in other words not have git track it anymore. To do that do:
+
+git rm --cached <file>
+
+You can pass files, directories, and file glob patterns to the git rm command.
+
+Viewing commit history
+----------------------
+
+git log
+
+git log -p shows the difference introduced in each commit
+
+git log -2 limits the output to the last two entries
+
+git log --stat to see abbreviated stats for each commit
+
+git log --graph This options adds a nice little ASCII graph showing your branch and merge history
+
+Limiting log output
+-------------------
+
+use --since, --before and --until with git log to use time limiting options
+
+e.g.
+
+git log --since=2.weeks
+git log since="2008-01-15"
+git log since="2 years 1 day 3 minutes"
+
+To show only commits that introduced a change to the code that added or removed a string use -S option
+
+e.g.
+
+git log -Sfunction_name
+
+To specify a directory or file name to limit the log output to use the path
+
+e.g.
+
+git log -- <path/filename>
+
+
+git log -p 
+	will show a diff of all the commits.
+
+
+Diffing using git (equivalent of svn diff)
+------------------------------------------
+
+git diff HEAD <path>
+
+
+Undoing things e.g. changing commit message, and adding files to a commit
+-------------------------------------------------------------------------
+
+One of the common undos takes place when you commit too early and possibly forget to add some files, or you mess up your commit message. If you want to try that commit again, you can run commit with the --amend option:
+
+git commit --amend
+
+This command takes your staging area and uses it for the commit. If you’ve made no changes since your last commit (for instance, you run this command immediately after your previous commit), then your snapshot will look exactly the same, and all you’ll change is your commit message.
+
+To stage a file that you modified to a previous commit do the following:
+
+e.g.
+
+git commit -m 'initial commit'
+git add forgotten_file
+git commit --amend
+
+You end up with a single commit - the second commit replaces the results of the first
+
+Unstaging a staged file
+-----------------------
+
+To remove a file from the staged area do:
+
+git reset HEAD <file-name>
+
+Unmodifying a Modified File
+---------------------------
+
+ok lets say you have pulled a file back from the staging area back to the working area using git reset HEAD <file-name>. To undo the changes made to the file in the  working directory do:
+
+git checkout -- <file-name>
+
+
+
+Working with Remotes
+--------------------
+
+To see which remote servers you have configured, you can run the git remote command. It lists the shortnames of each remote handle you’ve specified. If you’ve cloned your repository, you should at least see origin – that is the default name Git gives to the server you cloned from
+
+To see the URLs that Git stored for the shortname use the -v option to git remote.
+
+e.g. 
+
+git remote -v
+
+If you have more than one remote this command lists them all. For example a repository with multiple remotes for working with several collaborators might looks something like:
+
+cd grit
+git remote -v
+
+bakkdoor 	https://url1 (fetch)
+bakkdoor 	https:/url1 (push)
+cho45 		https://url2 (fetch)
+cho45		https://url2(push)
+
+This means we can pull contributions from any of these users pretty easily and we might have permissions to push to those repositories as well.
+
+
+Adding remote repositories
+--------------------------
+
+To add a new remote Git Repository as a shortname run:
+
+git remote add <shortname> url
+
+e.g.
+
+git remote
+origin
+git remote add pb https://someurl
+git remote -v
+
+origin	https://origin_url(fetch)
+origin	https://origin_url(push)
+pb		https://pb_url(fetch)
+pb		https://pb_url(push)
+
+Now you can use the string pb on the command line for example to fetch all the information that Paul has that you don't have yet in your repository
+
+e.g.
+
+git fetch pb
+
+Paul's master branch is now accessible as pb/master. You can merge it into one of your branches or you can check out a local branch at that point if you want to inspect it.
+
+
+git fetch only fetches new work that has been pushed to the server since you cloned or last fetched from. git fetch only downloads the data to your local repository - it doesn't automatically merge it with any of your work or modify what you are currently working on. You have to merge it manually into your work when you are ready.
+
+git pull command on the other hand will automatically fetch and then merge that remote branch into your current branch.
+
+
+Pushing to your remotes
+-----------------------
+When you have your project at a point that you want to share, you have to push it upstream.
+
+git push [remote-name] [branch-name]
+
+If you want to push your master branch to your origin server (cloning generally sets up both of those names for you automatically) you can do the following:
+
+git push origin master
+
+The above command will work if you have write permisions to the cloned server. If someone else has already pushed their changes before you, you will have to fetch their work first and incorporate it into your before you can push.
+
+
+Removing and Renaming Remotes
+-----------------------------
+
+To rename a remote's shortname:
+
+e.g.
+
+git remote rename pb paul
+
+the above example will rename the remote shortname from pb to paul so that you see paul when you do git remote
+
+To delete do 
+
+git remote rm pb
+
+
+Inspecting a Remote
+-------------------
+
+git remote show origin
+
+This command shows which branch is automatically pushed to when you run git push while on certain branches. It also shows you which remote branches on the server you don’t yet have, which remote branches you have that have been removed from the server, and multiple local branches that are able to merge automatically with their remote-tracking branch when you run git pull.
+
+
+
+
+
+Creating a new Branch
+-----------------------
+
+git branch testing
+
+Note: the default branch name in Git is master
+
+
+Switching to a Branch
+---------------------
+
+git checkout testing
+
+This moves Head to the testing branch
+
+
+Creating and Switching to a branch in one command
+--------------------------------------------------
+
+git checkout -b <branch-name>
+
+
+Ways of displaying branches
+---------------------------
+
+git log --oneline --decorate
+
+
+To see a graphical output do:
+
+git log --oneline --decorate --graph --all
+
+
+
+Basic Merge Conflicts
+---------------------
+
+To merge branches switch to the branch that you merge into and then do:
+
+git merge <branch-name>
+
+If there is a conflict, git will pause the merge until the conflict is resolved. You can look at the conflicted file by using git status
+
+Once you resolve the conflict, stage the file that was in conflict to resolve it.
+
+git add <resolved-file>
+
+
+Branch Management
+-----------------
+
+* To list all the branches that you are working on do:
+
+	git branch
+
+The branch that has the * prefix will be the branch that you have currently checked out.
+
+* To see the last commit on each branch do:
+
+	git branch -v
+	
+* To see which branches you have merged to your current branch do:
+
+	git branch --merged
+	
+	Note: branches that have been merged are safe to delete
+	
+* To see a list of the branches that have not been merged do:
+
+	git branch --no-merged
+	
+
+“ORIGIN” IS NOT SPECIAL
+-----------------------
+
+Just like the branch name “master” does not have any special meaning in Git, neither does “origin”. While “master” is the default name for a starting branch when you run git init which is the only reason it’s widely used, “origin” is the default name for a remote when you run git clone. If you run git clone -o booyah instead, then you will have booyah/ master as your default remote branch.
+
+
+Pushing
+-------
+
+When you want to share a branch with the world, you need to push it up to a remote that you have write access to. Your local branches aren’t automatically synchronized to the remotes you write to – you have to explicitly push the branches you want to share. That way, you can use private branches for work you don’t want to share, and push up only the topic branches you want to collaborate on.
+
+If you have a branch named serverfix that you want to work on with others, you can push it up the same way you pushed your first branch. Run:
+
+ git push <remote> <branch>
+ 
+ 
+To merge this work into your current working branch, you can run:
+
+ 	git merge origin/serverfix 
+
+If you want your own serverfix branch that you can work on, you can base it off your remote-tracking branch
+
+	git checkout -b serverfix origin/serverfix
+	
+This gives you a local branch that you can work on that starts where ori- gin/serverfix is.
+
+
+Tracking Branches
+-----------------
+
+Checking out a local branch from a remote-tracking branch automatically creates what is called a “tracking branch” (and the branch it tracks is called an “upstream branch”). Tracking branches are local branches that have a direct relationship to a remote branch. If you’re on a tracking branch and type git pull, Git automatically knows which server to fetch from and branch to merge into.
+
+When you clone a repository, it generally automatically creates a master branch that tracks origin/master. However, you can set up other tracking branches if you wish – ones that track branches on other remotes, or don’t track the master branch. The simple case is the example you just saw, running:
+
+ git checkout -b [branch] [remotename]/[branch]
+
+This is a common enough operation that git provides the --track shorthand:
+
+git checkout --track origin/serverfix
+
+To set up a local branch with a different name than the remote branch, you can easily use the first version with a different local branch name:
+
+git checkout -b sf origin/serverfix
+
+Now, your local branch sf will automatically pull from origin/serverfix.
+If you already have a local branch and want to set it to a remote branch you just pulled down, or want to change the upstream branch you’re tracking, you can use the -u or --set-upstream-to option to git branch to explicitly set it at any time.
+
+git branch -u origin/serverfix
+
+
+To see what tracking branches you have set up, you can use the -vv option to git branch. This will list out your local branches with more information including what each branch is tracking and if your local branch is ahead, behind or both.
+
+Ahead means we have commits which we haven't pushed out to the servers.
+Behind means there are commits on the server that we haven't merged in yet.
+
+Pulling
+-------
+
+While the git fetch command will fetch down all the changes on the server that you don’t have yet, it will not modify your working directory at all. It will simply get the data for you and let you merge it yourself. However, there is a command called git pull which is essentially a git fetch immediately followed by a git merge in most cases. If you have a tracking branch set up as demonstrated in the last section, either by explicitly setting it or by having it created for you by the clone or checkout commands, git pull will look up what server and branch your current branch is tracking, fetch from that server and then try to merge in that remote branch.
+Generally it’s better to simply use the fetch and merge commands explicitly as the magic of git pull can often be confusing.
+
+Deleting Remote Branches
+------------------------
+
+Suppose you’re done with a remote branch – say you and your collaborators are finished with a feature and have merged it into your remote’s master branch (or whatever branch your stable codeline is in). You can delete a remote branch using the --delete option to git push. If you want to delete your serverfix branch from the server, you run the following:
+
+git push origin --delete serverfix
+
+Basically all this does is remove the pointer from the server. The Git server will generally keep the data there for a while until a garbage collection runs, so if it was accidentally deleted, it’s o en easy to recover.
+
+Rebasing
+--------
+
+In Git, there are two main ways of integrating changes from one branch into another; merge and rebase. If you are merging one commit with with a commit that can be reached by following the first commit's history, Git simplifies things by moving the pointer forward because there is no divergent work to merge together. This is called a fast forward. If the commit on the branch you are on isn't a direct ancestor of the branch you are merging in, Git does a simple three way merge using the two snapshots pointed to by the branch tips and the common ancestor of the two.
+With rebase, you can take the patch of the changes that was introduced by a branch and apply those changes on another branch.
+
+It works by going to the common ancestor of the two branches (the one you’re on and the one you’re rebasing onto), getting the difference introduced by each commit of the branch you’re on, saving those differences to temporary files, resetting the current branch to the same commit as the branch you are rebasing onto, and finally applying each change in turn.
+
+e.g. suppose we have a master and an experiment branch and we want to rebase the experiment branch into the master
+
+git checkout experiment
+git rebase master
+
+The two divergent branches will be rebased together and you can reach master by following parent snapshots of the experiment branch i.e. both master and experiment are on a successive line of snapshots.
+
+At this point, you can go back to the master branch and do a fast forward merge.
+
+git checkout master
+git merge experiment
+
+Now the snapshots pointed to by master and experiment will be exactly the same like they would be when doing a regular merge but rebasing makes for a cleaner history. i.e. if you examine the log of a rebased branch, it looks like a linear history just as if all the work happened in series when it originally happened in parallel. Often, you will do this to make sure your commits apply cleanly on a remote branch.
+
+The important thing to note is that rebasing replays changes from one line of work onto another in the order they were introduced, whereas merging takes the endpoints and merges them together. (i.e. all your comments that you put in at various commit points in your branch will now be applied on the master in the order they happened when doing rebasing instead of getting only the endpoint comments when merging)
+
+More interesting Rebases
+-------------------------
+
+Let say you have the master branch checked out then you branch a topic branch server to add some server side functionality to your project and make a commit. Work goes on the master with new commits being added. You work on your branch and make commits. Now the two branches are divergent. Let's say that while you are working on the server branch, you again branch a topic branch called client to make some client side changes and commit your work resulting in the client side branch forking from the server branch. What you have now is essentially three divergent branches; master, server and client.
+
+Suppose you decide to merge your client side changes into your mainline (master) for a release but want to hold off on the server side changes until it is further tested. You can take the changes on the client that aren't on the server and replay them on your master branch by using the --onto option of git rebase:
+
+git rebase --onto master server client
+
+This basically says, check out the client branch figure out patches from the common ancestor of the client and server branches and then replay them on the master. Note it is important to just get the common ancestor of the client and server branches because you branched off the client branch from the server, you just want to rebase changes made regarding the client and not the server. i.e. if you had done work in the server and committed and then branched the client, there will be snapshots which contain work done on the server before branching off to the client. If you just do
+
+git checkout client
+git rebase master
+
+This will go back to the common ancestor of master and client (Which can take a path through snapshots for work done on the server since client branched off the server branch) and replay those changes on the master. But this is what we want to avoid i.e. applying changes made for the server as well. We want to just apply the changes made just for the client branch hence it is important to make sure we replay starting from the common ancestor for the server and client so we only replay the changes made by the client.
+
+So doing git rebase --onto master server client will check out the client branch, figure out the patches from the common ancestor of client and server branches (i.e. rebase onto the master from where the server and client branches meet ) and then replay them onto the master.
+
+At this point we can now fast forward the master
+
+git checkout master
+git merge client
+
+When you are ready to pull in the server branch you can rebase the server branch
+
+git checkout server
+git rebase master
+
+alternatively you can also do:
+
+git rebase [basebranch] [topicbranch] which checks out the topic branch and replays it onto the base branch
+
+git rebase master server
+
+Then you can fastforward the basebranch in this case master
+
+git checkout master
+git merge server
+
+At this point after the merges into master are complete for both the client and server branches, we can delete them.
+
+git branch -d client
+git branch -d server
+
+
+The Perils of Rebasing
+----------------------
+
+Ahh, but the bliss of rebasing isn’t without its drawbacks, which can be sum- med up in a single line:
+
+Do not rebase commits that exist outside your repository.
+
+If you follow that guideline, you’ll be fine. If you don’t, people will hate you, and you’ll be scorned by friends and family.
+
+If you treat rebasing as a way to clean up and work with commits before you push them, and if you only rebase commits that have never been available publicly, then you’ll be fine. If you rebase commits that have already been pushed publicly, and people may have based work on those commits, then you may be in for some frustrating trouble, and the scorn of your teammates.
+
+The conclusion is rebase local changes you’ve made but haven’t shared yet before you push them in order to clean up your story, but never rebase anything you’ve pushed somewhere.

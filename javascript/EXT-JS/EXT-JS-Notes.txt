@@ -1,0 +1,46 @@
+To run a template in JSFiddle
+=============================
+Note: to add the ext js css template, add http://http://cdn.sencha.io/ext-4.2.0-gpl/resources/css/ext-all.css in the External Resources box
+
+
+var data = {
+    name: 'Don Griffin',
+    title: 'Senior Technomage',
+    company: 'Sencha Inc.',
+    drinks: ['Coffee', 'Water', 'More Coffee'],
+    kids: [
+        { name: 'Aubrey',  age: 17 },
+        { name: 'Joshua',  age: 13 },
+        { name: 'Cale',    age: 10 },
+        { name: 'Nikol',   age: 5 },
+        { name: 'Solomon', age: 0 }
+    ]
+};
+
+var tpl = new Ext.XTemplate(
+    '<p>Name: {name}</p>',
+    '<p>Kids: ',
+    '<tpl for="kids">',
+        '<tpl if="this.isGirl(name)">',
+            '<p>Girl: {name} - {age}</p>',
+        '<tpl else>',
+            '<p>Boy: {name} - {age}</p>',
+        '</tpl>',
+        '<tpl if="this.isBaby(age)">',
+            '<p>{name} is a baby!</p>',
+        '</tpl>',
+    '</tpl></p>',
+    {
+        // XTemplate configuration:
+        disableFormats: true,
+        // member functions:
+        isGirl: function(name){
+           return name == 'Aubrey' || name == 'Nikol';
+        },
+        isBaby: function(age){
+           return age < 1;
+        }
+    }
+);
+
+tpl.overwrite(Ext.getBody(), data);

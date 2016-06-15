@@ -1,0 +1,980 @@
+Coffee Script Notes
+====================
+
+compiling coffee script from the command line
+
+coffee -o ~/temp/ -c ~/Documents/src/coffeescript/
+
+The above command will compile all *.coffee files in ~/Documents/src/coffeescript into *.js and output them in ~/temp
+
+
+To use the JavaScript Tester page with coffeeScript files, use the following:
+
+coffee -o ~/Documents/src/javascript/ -c ~/Documents/src/coffeescript/testbench.coffee
+
+or
+
+coffee -cwo output source
+
+which means compile every coffee file in source and all its subdirectories and put them in output and watch and automatically compile the source when it changes. To kill it use ctrl + c
+
+
+Note: any time you indent a line in CoffeeScript, you are wrapping that indented section of code in {}
+
+To just compile CoffeeScript and run it from the command line do:
+-----------------------------------------------------------------
+coffee testbench.coffee
+
+To see the Javascript output of CoffeeScript on the command line do:
+--------------------------------------------------------------------
+coffee -p testbench.coffee
+
+
+
+Lexical Scoping and Variable Safety
+-----------------------------------
+
+Because you don't have direct access to the var keyword, it's impossible to shadow an outer variable on purpose, you may only refer to it. So be careful that you're not reusing the name of an external variable accidentally, if you're writing a deeply nested function.
+
+CoffeeScript output is wrapped in an anonymous function:  (function(){ ... })(); This safety wrapper, combined with the automatic generation of the var keyword, make it exceedingly difficult to pollute the global namespace by accident.
+
+If you'd like to create top-level variables for other scripts to use, attach them as properties on window, or on the exports object in CommonJS. The existential operator (covered below), gives you a reliable way to figure out where to add them; if you're targeting both CommonJS and the browser: exports ? this
+
+If, Else, Unless and Conditional Assignment
+-------------------------------------------
+
+CoffeeScript can compile if statements into JavaScript expressions, using the ternary operator when possible, and closure wrapping otherwise. There is no explicit ternary statement in CoffeeScript — you simply use a regular if statement on a single line. There is also a handy postfix form, with the if or unless at the end.
+
+Splats...
+---------
+
+The JavaScript arguments object is a useful way to work with functions that accept variable numbers of arguments. CoffeeScript provides splats ..., both for function definition as well as invocation, making variable numbers of arguments a little bit more palatable.
+
+gold = silver = rest = "unknown"
+
+awardMedals = (first, second, others...) ->
+  gold   = first
+  silver = second
+  rest   = others
+
+contenders = [
+  "Michael Phelps"
+  "Liu Xiang"
+  "Yao Ming"
+  "Allyson Felix"
+  "Shawn Johnson"
+  "Roman Sebrle"
+  "Guo Jingjing"
+  "Tyson Gay"
+  "Asafa Powell"
+  "Usain Bolt"
+]
+
+awardMedals contenders...
+
+alert "Gold: " + gold
+alert "Silver: " + silver
+alert "The Field: " + rest
+
+Note if you are going to be calling a function with splats make sure that you are passing an array for the arguments. For awardMedals contenders... contenders has to be an array.
+
+
+
+Implicit Parentheses
+--------------------
+
+The ability to use parentheses is a double edged sword. To use this power you need to understand one simple rule: implicit parentheses don't close until the end of the expression
+
+console.log(Math.round 3.1, Math.round 5.2) compiles to console.log(Math.round (3.1, Math.round (5.2)))
+
+To avoid confusion, use parentheses for everything but the outermost function call.
+
+is operator
+----------
+
+The is keyword compiles to Javascript's === the strict equality operator.
+
+Strict Equality or Nothing
+--------------------------
+
+CoffeeScript's is and == both compile to ===. There is no way to get the loose type coercing equality check of Javascript's ==. This is to avoid head scratchers like:
+
+",,," = new Array(4) //true
+
+
+== isn't transitive
+
+e.g.
+
+'' == '0' //false
+0 == ''   //true
+0 == '0'  //true
+
+
+unless
+------
+
+unless(expression) is a shorthand for if not(expression). It can be used as a prefix or postfix operator.
+
+e.g.
+
+prefix
+
+unless expression1 expression2
+
+postfix
+
+expression2 unless expression1
+
+
+Curly Brace use
+---------------
+
+In CoffeeScript, curly braces are used for one thing only: declaring JSON style objects.
+
+Unless, Prefix and Postfix operators
+------------------------------------
+
+odd = (num) ->
+	unless typeof num is 'number'
+		throw "#{num} is not a number"
+	unless num is Math.round(num)
+		throw "#{num} is not an Integer"
+	unless num > 0
+		throw "#{num} is not positive"
+	num % 2 is 1
+	
+	
+the above unless is written in the prefix syntax. It could also have been written in the postfix syntax as
+
+throw a unless b
+
+throw "#{num} is not positive" unless num > 0
+
+
+Assigning a variable scope
+--------------------------
+
+To assign a scope do a variable, simple declare and assign a suitable value for the variable
+
+e.g.
+
+obj = null
+initialize =  ->
+	obj = "This variable refers to the global object whose value ===null
+
+the obj = null line tells the compiler to give the variable module level scope allowing it to be modified outside of the anonymous function.	
+	
+Context or this (@)
+-------------------
+
+The 'this' keyword is referenced using '@'. Think of 'this' not as this object but as this context i.e. this defines the context.
+
+setname = (name) -> @name = name
+
+is equivalent to 
+
+var setname = function(name){
+	this.name = name;
+}
+
+fat arrow =>
+------------
+
+The fat arrow is used to bind a function to a context. This is equivalent as using the Function object's bind method which takes in the context as its first variable and returns a newly defined function that takes in the same arguments as the original function but whose context is the value of the first argument passed to the bind object. When you use => it means that the value of this within the function will have the same context as where the function is defined from no matter where it is called from!
+
+Thing to note about bound functions:
+
+Functions returned by the bind() method do not have a prototype property (the prototype property of regular functions cannot be deleted) and objects created when these bound functions are used as constructors inherit from the prototype of the original, unbound constructor. Also, a bound constructor works just like the unbound constructor for the purposes of the instanceof operator.
+
+
+Property Arguments(@arg)
+------------------------
+
+Quite simply, when @ precedes the name of an argument to a function, that function automatically makes the assignment from the argument to the property with that name on the context object, this.
+
+e.g. the following two snippets are equivalent:
+
+setname = (name) -> @name = name
+
+and
+
+setname = (@name) -> #no code required!
+
+
+Existential Operator (?)
+------------------------
+
+The existential operator is a shorthand for checking that the given value:
+	1. Exists in the current scope
+	2. Isn't undefined or null
+	
+e.g. console.log "aVariable doesn't exist" unless aVariable?
+
+equivalent to:
+
+if (typeof aVariable === "undefined" || aVariable === null) {
+  console.log("aVariable doesn't exist");
+}
+
+The existential operator can also be placed between two variables: a ? b
+
+The above expression will return a if a exists otherwise b
+
+This can be combined with the = to form a compound assignment: a =? b which is the same as a = a ? b
+
+Default Arguments (arg=)
+------------------------
+
+You can assign default values to function arguments using =
+
+e.g.
+
+ringFireAlarm = (isDrill=true) -> console.log "Its a drill, light your hair on fire and run"
+
+The above statement is pretty much equivalent to:
+
+ringFireAlarm = (isDrill) -> 
+	isDrill = true unless isDrill?
+	console.log "Its a drill, light your hair on fire and run"
+	
+The default argument expression is particularly useful when you hav multiple function arguments and want to use default values for some of the arguments:
+
+e.g.
+
+chooseMeals = (breakfast = 'waffles', lunch = 'gyros', dinner = 'pizza') ->
+	console.log "breakfast:#{breakfast} lunch: #{lunch} dinner: #{dinner}"
+	
+chooseMeals null, 'burritos', null
+
+The above code prints: breakfast:waffles lunch: burritos dinner: pizza
+
+There is one more detail worth mentioning about what can be passed as default arguments. You can use arbitrary expressions as default arguments, though this generally isn't recommended. If you do so, the expression will be executed from whatever context the function is being called in, before any expression in the function body and only if the assignment is made. In other words the following expressions are equivalent:
+
+dontTryThisAtHome = (noArgNoProblem = @iHopeThisWorks()) -> ....
+
+and
+
+dontTryThisAtHome = (noArgNoProblem) ->
+	noArgNoProblem ?= @iHopeThisWorks()
+	
+Splats (...)
+------------
+
+CoffeeScript lets you convert any range of arguments to an array automatically. Just add an ellipsis ... to the end of any argument name:
+
+refine = (wheat, chaff...) ->
+	console.log "The best: #{wheat}"
+	console.log "The rest: #{chaff.join(', ')}"
+	
+Calling the above with four arguments
+
+	refine 'great', 'not bad', 'so so', 'meh'
+
+results in:
+ 
+	The best: great
+	The rest: not bad, so so, meh
+	
+If one argument is given, or if none are, then chaff will just be an empty array.
+
+A splatted argument doesn't have to go at the end of an argument list. The CoffeeScript compiler is smart enough about determining the appropriate arguments to put in the array:
+
+sandwich = (beginning, middle..., end) -> ...
+
+Non splatted arguments always get in first. So, if sandwich is called with only two arguments, those will become beginning and end. Only when there are four or more arguments is there a middle. Splats soak up any and all extra arguments. Note: it only makes sense to have only one splatted argument in a given function, otherwise splats would have to duke it out over how to split the arguments within themselves.
+
+It is worth mentioning that splats can be used to divvy up arrays on the fly without the use of a function.
+
+e.g.
+
+birds = [ 'duck', 'duck', 'duck', 'duck', 'goose!' ]
+[ducks..., goose] = birds
+console.log ducks
+
+This will print:
+
+duck, duck, duck, duck
+
+
+In a function call, splats mean precisely the inverse of what they mean in argument lists and pattern matching assignments: they expand an array into a series of arguments, rather than collapsing a series of arguments into an array.
+
+e.g.
+
+console.log 1, 2, 3, 4
+
+prints:
+	1 2 3 4
+
+arr = [1,2,3,4]
+console.log	arr...,5
+
+prints:
+	1 2 3 4 5
+
+	
+0 <= x < 5
+----------	
+
+This is CoffeeScript's chained comparison feature. This is equivalent to:
+
+0 <= x and x < 5
+
+
+Collections and Iterations
+--------------------------
+
+JSON objects can be pasted directly in CoffeeScript code.
+
+We can create objects with several properties at once using JSON-style constructs.
+
+e.g.
+
+father = {
+	name: 'John',
+	daughter: {
+		name: 'Jill'
+	},
+	son: {
+		name: 'Jack'
+	}
+}
+
+Note that while curly braces have many uses in JavaScript, their only purpose in CoffeeScript is to declare objects. Quotes are optional around keys as long as they obey standard variable naming rules; otherwise single or double quotes can be used.
+
+Note that string interpolation is not supported in hash keys.
+
+Streamlined JSON
+----------------
+
+CoffeeScript takes JSON and distills it to its essence. While full blown JSON is perfectly valid, significant whitespace can be used in the "symbology" when describing an object: commas are optional between properties that are separated by new lines, and best of all, curly braces are optional when an object's properties are indented. That means that the JSON above can be replaced by something like:
+
+father =
+	name: 'John'
+	daughter: 
+		name: 'Jill'
+	son:
+		name: 'Jack'
+
+You can also use the following streamlined notation inline:
+
+fellowship = wizard: 'Gandalf', hobbits: ['Frodo', 'Pippin', 'Sam']
+
+The above code is equivalent to:
+
+fellowship = {wizard: 'Gandalf', hobbits: ['Frodo', 'Pippin', 'Sam']}
+
+The magic here is that every time the CoffeeScript compiler sees :, it knows that you are building an object. This technique is especially handy when a function takes a hash of options as its last argument.
+
+e.g.
+
+drawSprite x, y, invert: true
+
+Same-Name Key-Value Pairs
+-------------------------
+
+One handy trick that CoffeeScript offers is the ability to omit the value from a key-value pair when the value is a variable named by the key. 
+
+e.g.
+
+delta = '|U0394'
+greekUnicode = {delta}
+
+which is equivalent to:
+
+delta = '|U0394'
+greekUnicode = {delta:delta}
+
+This shorthand only works with explicit curly braces.
+
+Soaks: a?.b
+------------
+
+The following existential expression a = b ? c means set a to b if b exists if not set a to c. Soaks are a special case of the existential operator that can be used with objects with properties.
+
+e.g.
+
+a = b?.property ? c
+
+The above expression first checks if b exists and then checks if property is a property of b and it exists. If it does sets a to b.property if not sets a to c.
+
+You can chain as many soaks as you like with both dots and square brackets, and even use the syntax to check whether a function exists before running it:
+
+cats?['Garfield']?.eat?() if lasagna?
+
+In one line, the above expression says, if there is lasagna and if we have cats and if there is one named 'Garfield' and if Garfield has an eat function, then run that function.
+
+
+
+Arrays
+======
+
+Inclusive range operator (..)
+-----------------------------
+
+e.g. 
+	[1..5] is equivalent to [1,2,3,4,5]
+
+	[5..1] is equivalent to [5,4,3,2,1] 
+
+Exclusive range operator (...)
+------------------------------
+e.g. 
+	[1...5] is equivalent to [1,2,3,4]
+	[5...1] is equivalent to [5,4,3,2]
+
+
+Slicing
+-------
+
+When you want to tear a chunk of a JavaScript array, you turn to the slice method
+
+e.g.
+
+	['a', 'b', 'c'].slice 0, 3
+	
+returns:
+	['a', 'b', 'c']
+	
+This is like using the exclusive operator on the array. Infact the above expression can also be written as:
+
+	['a', 'b', 'c'][0...3]
+	
+or
+	['a', 'b', 'c'][0..2] if using the inclusive range.
+	
+Eventhough we can use the inclusive and exclusive types of expressions for slicing, bear in mind though that you can't use the reverse forms of these operators to slice the array. i.e. if the first index is greater than the second then an empty array is returned.
+
+e.g.
+	['a', 'b', 'c'][3...0] === ['a', 'b', 'c'][2..0] = []
+	
+You can use negative indices to count backwards from the end of the array
+
+e.g. 
+	['a', 'b', 'c'][0..-1] 
+returns
+	['a', 'b', 'c']
+
+Using negative indices is the same as adding the negative index to array.length.
+
+If you omit the second index, the slice goes all the way to the end regardless of whether you are using an inclusive or exclusive range.
+
+e.g.
+
+	['a', 'b', 'c'][1..] === ['a', 'b', 'c'][1...] = ['b', 'c']
+	
+
+Splicing
+--------
+
+Splice is a combination of slicing and inserting.
+
+e.g.
+	arr = ['a', 'b', 'c']
+	arr[1..2] = ['d']	
+	
+returns
+	['d'] i.e. what was inserted but if you print arr you will see ['a', 'd']
+	
+The range defines the part of the array to be replaced. If the range is empty, a pure insertion occurs at the first index.
+
+e.g.
+
+	arr = ['a', 'c']
+	arr[1...1] = ['b'] #arr[1...1] is an empty range and [b] will be inserted at index 1. if arr[2...2] was used b would be inserted at 2
+	arr
+
+returns	
+	['a', 'b', 'c']	
+	
+
+Note: While negative indices work great for slicing, they completely fail for splicing. The trick of omitting the last index works fine with splicing just as in slicing though.
+
+
+
+Iterating over Collections
+===========================
+
+for...of
+---------
+
+To iterate over an object's properties use the following syntax:
+
+	for key, value of object
+		#do something with key and value
+
+This will loop through all the keys of the object and assign the keys to key and the value corresponding to that key to value. The second variable i.e. value is optional.
+
+JavaScript makes a distinction between properties owned by an object and properties inherited from it's prototype. Properties owned by the object can be checked by using object.hasOwnProperty(key)
+
+Because it's common to want to loop through just an object's own property and not the ones it shares with all it's siblings, CoffeScript lets you write for own to automatically perform this check and skip the properties that fail it.
+
+e.g.
+
+	for own sword of Kahless
+	
+which is equivalent to
+
+	for sword of Kahless
+		continue unless Kahless.hasOwnProperty(sword)
+
+for...in
+---------		
+
+To iterate over the values of an array use:
+
+	for value in array
+		#do something with the value
+		
+We could also use the object iteration syntax on an array if we wanted to and that will return everything in the array and not just the indices and the corresponding values at those indices.
+
+Both styles of for loops can be followed by a when clause that skips over the loop iterations when the given condition fails. 
+
+e.g.
+
+	for key, func of obj when typeof func is 'function'
+		func()
+
+The above snipped will execute all the object properties that are methods i.e. functions.
+
+The above example could have also been written using continue unless as
+
+		for key, func of obj
+			continue unless typeof func is 'function'
+			func()
+
+However, when is a useful syntactic sugar, especially for one liners :)
+
+No Scope for 'for'
+++++++++++++++++++
+
+when you write for x of obj or for x in arr, you are making assignments to a variable named x in the current scope. You can take advantage of this by using those variables after the loop. Here's one example:
+
+for name, occupation of murderMysteryCharacters
+	break if occupation is 'butler'
+console.log "#{butler} did it!"
+
+This lack of scope can surprise you if you define a function within the for loop. So when in doubt, use do to capture the loop variable on each iteration:
+
+e.g.
+	for x in arr
+		do (x) ->
+			setTimeout (-> console.log x), 0
++++++++++++++++++++
+
+
+expression (by)
+--------------
+
+for...in supports an additional modifier not shared by its cousin for...of: by.
+
+Rather than stepping through an array one value at a time which is the default, by lets you step by an arbitrary value including fractional values.
+
+e.g.
+
+	for value in [0..10] by 1/3
+	         console.log value
+
+The above snippet will increment by 1/3 from 0 to 10
+
+using negative steps to iterate backwards through a range (Skeptical about this the negative thing doesn't work at least in version 1.10.0)
+---------------------------------------------------------
+
+You can use negative steps to iterate backwards through a range (not an array)
+
+e.g.
+	countdown = (max) ->
+		console.log x for x in [max..0] by -1 (Don't think this is true!. you can iterate backward through any range that is defined with the first index greater than the second)
+		
+Note, however, that negative steps are not supported for arrays. When you write for...in[start..end], start is the first loop value (and end is the last), so by step with a negative value works fine as long as start > end. When you write for...in arr, the first loop index is always 0 and the last loop index is ar.length - 1. So if arr..length is positive, by step with a negative value will result in an infinite loop i.e. the last loop index is never reached!
+
+
+of and in operators
+-------------------
+
+of and in lead double lives when used as operators:
+
+key of obj checks whether obj[key] is set and x in arr checks whether any of arr's values equals x. As with for...in loops, the in operator should only be used with arrays and other enumerable entities, like arguments and jQuery objects.
+
+e.g.
+
+fruits = ['apple', 'cherry', 'mango']
+'mango' in fruits #true
+
+germanToEnglish : { ja:'yes', nein: 'no' }
+'ja' of germanToEnglish  #true. Equivalent as saying germanToEnglish['ja']?
+
+
+Conditional Iteration with while and until
+------------------------------------------
+
+makeHay() while sunShines()
+makeHay() until sunSets()
+
+until is short hand for while not just like unless is shorthand for if not. In both the above syntaxes, makeHay is not run unless the condition is met.
+
+
+loop
+----
+
+loop is the equivalent of  while true loop syntax in other languages. The block is repeated until a break or return forces the iteration to break or return.
+
+Note that all loop syntaxes except loop allow both postfix and indented forms, just as if/unless does. loop is unique in that it is prefixed rather than postfixed like so:
+
+	a = 0
+	loop break if ++a > 1000
+	console.log a #1000
+
+
+Comprehensions
+--------------
+
+Comprehension means that loops are rarely necessary to use operations on lists and arrays. They key idea for understanding Comprehensions is understanding that every loop in CoffeeScript returns a value. That value is an array containing the result of every loop iteration except those skipped by a continue or break as a result of a when clause. This is why we can do things like the following examples.
+
+e.g.
+
+negate numbers 1 to 10
+
+	negatedNumbers = -num for num in [1..10]
+	
+
+Find all divisors of 960
+
+isInteger = (x) -> num is Math.round(num)
+
+numsThatDivide960 = num for num in [0..960] when isInteger(960/num)
+
+
+List comprehensions are the consequence of a core part of CoffeeScript's philosophy: everything in CoffeeScript is an expression and every expression has a value. Loops return an array of their iteration values.
+
+
+Pattern matching or Destructuring Assignment
+--------------------------------------------
+
+In JavaScript, assignment is a strict one at a time affair. If you have multiple values to assign you have to do them individually. In CoffeeScript you can write one line of code as follows:
+
+[firstName, middleInitial, lastName] = ['Joe', 'T', 'Plumber']
+
+This syntax is called array pattern matching. What it does is assign each variable to values that matches its the variable in the right handside array.
+
+You can also reference the same variable on both sides of the assignment. Using this syntax swapping values can be a one line affair instead of three.
+
+[newboss, oldboss] = [oldboss, newboss]
+
+
+There is also pattern matching which uses objects instead of arrays. 
+
+e.g.
+
+	myRect = 
+		x: 100
+		y: 200
+	
+	{x:myX, y:myY} = myRect
+	
+the above code is equivalent to the following assignments
+
+myX = myRect.x
+myY = myRect.y
+
+Remember {x} is the same as {x:x} i.e. when you have the same name key value pairs see (Same-Name Key-Value Pairs) above. So when you have same name key value pairs you can do the following:
+
+	{x, y} = rect
+
+which is equivalent to:
+
+x = rect.x
+y = rect.y
+
+You can also nest array patterns and object patterns inside of each other
+
+e.g.
+
+	{languages: [favorireLanguage, otherLanguages...]} = resume
+	
+This code translates to take resume.languages, assign first entry to favoriteLanguage and the rest to otherLanguages.
+
+
+Modules and Classes
+===================
+
+Splitting up Apps
+-----------------
+
+In a browser environment, JavaScript doesn't care about files. No matter how many files you may have, it's just a bunch of lines. So, if two files in an application happen to declare global-scope variables with the same name, well, they are just going to have to duke it out.
+
+This poses a problem for JavaScript apps in that if a team is splitting up a project, how can they be sure that they are not overwritting each other's variables? How can you be sure that open-source code that you drop in doesn't conflict with your own?
+
+The solution is namespacing. In JavaScript, every function has its own namespace. A variable declared in a function is never visible outside that function. So, a common JavaScript convention is to make each file a module by wrapping it in a function, which is immediately executed.
+
+CoffeeScript compiler wraps each .coffee file in an anonymous function wrapper, unless it is invoked with the --bare flag. CoffeeScript also prevents you from declaring global variables by mistake, which in JavaScript is as easy as forgetting the var keyword. (In a JavaScript function if you forget the var keyword when declaring a variable then that variable will no longer be local to that function it will be defined on the global scope). So the question is, how do you share data between modules?
+
+The answer is you attach them to the existing global variable. One option is to use the root object, which is the only object whose properties can be referenced without qualification. In a browser environment, the root object is window. In Node it's global.
+
+e.g.
+
+parseInt is actually window.parseInt/global.parseInt
+Math is actually window.Math/global.Math
+
+In JavaScript, attaching variables to the root object is easy, i.e. if you forget to use the var keyword then that variable will be defined globally. In CoffeeScript, on the other hand you need to be explicit.
+
+e.g.
+
+	root = global ? window
+	
+	#file1.coffee
+	root.emergencyNumber = 911;
+	
+	#file2.coffee
+	console.log emergencyNumber #911
+	emergencyNumber is root.emergencyNumber #true
+	
+Globals and Implicit Declarations
+---------------------------------
+
+While you can get globals without referencing the root object, you can't set them that way. This is an easy mistake to make:
+
+root = global ? window
+
+#file1.coffee
+root.dogName = 'Fido'
+dogName is root.dogName #true
+
+#file2.coffee
+console.log dogName #undefined
+dogName = 'Bingo'
+dogName is root.dogName #false
+
+Why is dogName undefined at the start of the second module? Because a variable with the same name is assigned later on. CoffeeScript interprets that as a new variable declaration, and all variable declarations in CoffeeScript are automatically moved to the top of the scope.
+
+So remember always, ALWAYS use the root object when setting a global variable. Statements of the form x=y will never change the value of x in other modules.
+
+Prototypes
+----------
+
+A prototype is an object whose properties are shared by all objects that have that prototype. An object's prototype can usually be accessed using the aptly named prototype property.
+
+However, you can't just go and write A.prototype = B. Instead, you need to use the new keyword, which takes a function called a constructor and creates an object that inherits the constructor's prototype. 
+
+e.g.
+
+Boy = ->
+Boy::sing = -> console.log "It ain't easy being a boy named Sue"
+
+sue = new Boy();
+sue.sing() #It ain't easy being a boy named Sue
+
+prototype symbol (::)
+---------------------
+
+In the above example, Boy::sing is shorthand for Boy.prototype.sing. The symbol :: is to prototype as @ is to this.
+
+
+When we use new, several things happen: a new object is created, that object is given the prototype from the constructor and the constructor is executed in the new object's context. 
+
+e.g.
+
+Gift = (@name) ->
+	Gift.count++
+	@day = Gift.count
+	@announce()
+
+Gift.count = 0
+Gift::announce = ->
+	console.log "On day #{@day} of Christmas I received #{@name}"
+	
+gift1 = new Gift('a partridge in a pear tree')
+gift2 = new Gift('two turtle doves')
+
+The output is:
+
+	On day 1 of Christmas I received a partridge in a pear tree
+	On day 2 of Christmas I received two turtle doves
+	
+Each time the Gift constructor runs, it does four things: assigns the given name to @name using the argument shorthand, increments the count property on the Gift constructor, copies that value to @day and runs the @announce function inherited from the prototype. The important thing to notice here is that all of the functions on the new object run in the context of the object.
+
+When an object inherits properties from a prototype, changes to the prototype will change the inherited properties as well:
+
+e.g.
+	Classes/Raven.coffee
+	Raven ->
+	Raven::quoth -> console.log 'Nevermore'
+	
+	raven1 = new Raven()
+	raven1.quoth() #Nevermore
+	
+	Raven::quoth -> console.log "I'm hungry"
+	raven1.quoth() #I'm hungry
+	
+Properties attached directly to objects take precedence over prototype properties.
+
+e.g.
+	Classes/Raven.coffee
+	raven2 = new Raven()
+	raven2.quoth -> console.log "I'm my own kind of raven
+	raven1.quoth() #I'm hungry
+	raven2.quoth() #I'm my own kind of raven
+	
+To check whether a property is attached to an object or directly inherited from a prototype, use the hasOwnProperty function.
+
+e.g.
+	console.log raven1.hasOwnProperty('quoth') #false
+	console.log raven2.hasOwnProperty('quoth') #true
+
+Classes: Functions with Prototypes
+----------------------------------
+
+CoffeeScript has a clear way of distinguishing constructor or class properties from prototype properties and of distinguishing constructor functions from ordinary functions.
+
+e.g.
+
+	Classes/Tribble.coffee
+	
+	class Tribble
+		constructor ->
+			@isAlive = true
+			Tribble.count++
+		
+		#Prototype properties
+		breed: -> new Tribble if @isAlive
+		die: -> 
+			Tribble.count-- if @isAlive
+			@isAlive = false
+			
+		#Class level properties
+		@count = 0
+		@makeTrouble: -> console.log ('Trouble!' for i in [1..@count]).join(' ')
+		
+
+Lets test this:
+
+	tribble1 = new Tribble
+	tribble2 = new Tribble
+	
+	Tribble.makeTrouble() #Trouble! Trouble!
+	
+Notice that Tribble.count is referred to as @count in the Tribble class context but not within the Tribble methods. Remember that there are three object types we are dealing with here: The tribble object itself which is actually a constructor function, Tribble prototype, and the Tribble instance.
+
+By default, Tribble properties other than the constructor are attached to the prototype. When we use the @prefix, we're insisting that we want to attach the property to the class object itself.
+
+Because the functions attached to the prototype are invoked in the context of the individual object (as is the constructor), variables prefixed with @ within those functions are references to instance properties. This is why we define @isAlive in the constructor: we need to attach a separate @isAlive property to each instance. That lets us do the following:
+
+e.g.
+
+	tribble1.die()
+	Tribble.makeTrouble() #Trouble!
+	
+Killing tribble1 off again would have no effect, thanks to the @isAlive check.
+
+e.g.
+
+	tribble2.breed().breed().breed()
+	Tribble.makeTrouble() #Trouble! Trouble! Trouble! Trouble!
+	
+
+Inheritance with extends
+-------------------------
+
+JavaScript supports inheritance through something called "prototype chains". Let's say A's prototype B, has its own prototype C. Then when we write this:
+
+a = new A()
+console.log a.flurb()
+
+First the runtime checks to see if the particular A instance a has a property flurb: If not, it checks A's prototype B, and if that is still no dice, it checks B's prototype C. If C has no flurb, then the runtime checks the default object prototype that is the prototype of {}. So, every prototype inherits fro {} but there maybe other prototypes in between.
+
+CoffeeScript's extend keyword makes it easy to inherit from an object's prototype.
+
+e.g.
+
+	class B extends A
+	
+Here B's prototype inherits from A's prototype. In addition, A's class-level properties are copied over to B. So if we left the definition of B alone, B instances would hae exactly the same behavior as A instances. There is one exception: B.name would be 'B', while A.name would be 'A' - name is a special property.
+
+Now lets look at a slightly deeper example:
+
+e.g.
+	class Pet
+		constructor: -> @isHungry = true
+		eat: -> @isHungry = false
+		
+	class Dog extends Pet
+		eat: ->
+			console.log "*crunch, crunch*"
+			super()
+		fetch: -> 
+			console.log 'Yip yip!'
+			@isHungry = true
+
+The constructor from Pet is inherited by Dog which means that dogs start out hungry. When a dog eats, it makes some noises and then invokes super() which means " call the method of the same name on the parent class". More precisely, it means Pet::eat.call this.
+
+If a constructor is defined on the child class, then it overrides the constructor from the parent class. It can invoke the parent constructor at any time using super()
+
+A note about super()
+--------------------
+
+e.g. Whats wrong with the following example?
+
+	class Appliance
+		constructor: (warranty) ->
+			warrantyDB.save(this) if warranty
+			
+	class Toaster extends Appliance
+		constructor: (warranty) ->
+			super()
+			
+When we create a new Toaster, super() will invoke the parent constructor without passing along the warranty argument, which means that the toaster won't be saved in the warranty database.
+
+We could fix this by writing super(warranty) but there is a shorthand we can use instead: super. With no parentheses or arguments, super will pass on every one of the current functions arguments.
+
+
+Polymorphism
+------------
+
+One great use for classes is polymorphism. Here is a classic example
+
+e.g.
+
+	class Shape
+		constructor: (@width) ->
+		computeArea: -> throw new Error('I am an abstract class!')
+		
+	class Square extends Shape
+		computeArea: -> Math.pow @width, 2
+		
+	class Circle extends Shape
+		radius: -> @width / 2
+		computeArea: -> Math.PI * Math.pow @radius(), 2
+		
+	showArea = (shape) ->
+		unless shape instance of Shape
+			throw new Error('showArea requires a Shape instance!')
+		console.log shape.computeArea()
+		
+	showArea new Square(2) #4
+	showArea new Circle(2) #pi
+	
+Notice that the showArea function checks that the object passed to it is a Shape instance using the instance keyword but it doesn't care what kind of shape it has been given. Both Square and Circle will work. If we didn't use the instanceof check, that would be known as "duck typing" i.e. if it quacks and walks like a duck then it must be a duck" i.e. as long as the object had a computeArea method defined on it, it would work. If it doesn't have a computeArea method on it then we we will get a meaningful error message anyway. But there are times when we want to be sure that a particular object is what we think it is.
+
+
+Switch
+------
+
+There are a number of differences between JavaScript's switch and CoffeeScript's switch. For starters, there is an implicit break between clauses to prevent unintended "fall through": second, the result of the switch is returned. When the return value is used, break and return statements are not allowed. If you try, you will get a syntax error because it does not make sense to say:
+	a = return x
+so the compiler won't allow it as a possibility.
+
+CoffeeScript also makes several syntactic changes. For example when is used instead of case and esle instead of default. A single when can be followed by several potential matches delimited by commas. Also, instead of :, those match clauses are separated from their outcomes by indentation or then.
+
+e.g.
+
+	requisitionStarship = (captain) ->
+		switch captain
+			when 'Kirk', 'Picard', 'Archer'
+				new Enterprise()
+			when 'Janeway'
+				new Voyager()
+			else
+				throw new Error('Invalid starship captain')
+
+
+

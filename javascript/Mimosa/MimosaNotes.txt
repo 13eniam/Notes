@@ -1,0 +1,6 @@
+Mimomosa Notes
+==============
+
+Mimosa compiles the file and will show the error on the console.  IntelliJ and VIM do a pretty good job of highlighting syntax errors also.  Mimosa will only show the error once so you have to be careful.  You can always do a 
+ 
+Mimosa clean –f followed by a mimosa build to see errors.

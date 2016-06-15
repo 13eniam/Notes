@@ -1,0 +1,568 @@
+EXT-JS
+=====
+
+Creating a simple EXT-JS application
+-----------------------------------
+
+Application.js
+
+Ext.define('MyApp.Application', {
+    name: 'MyApp',
+    extend: 'Ext.app.Application',
+    launch: function() {
+        Ext.create('Ext.container.Viewport', {
+            layout: 'fit',
+            items: [
+                {
+                    title: 'Hello Ext',
+                    html : 'Hello! Welcome to Ext JS.'
+                }
+            ]
+        });
+    }
+});
+
+
+
+EXT-JS Class naming convention
+-------------------------------
+
+Classes may only contain alphanumeric characters. Do not use underscores, hyphens, or any non-alphanumeric character. 
+
+
+The top-level namespaces and the actual class names should be in CamelCased, everything else should be all lower-cased. For example:
+
+MyCompany.form.action.AutoLoad
+
+
+Source Files
+------------
+
+The names of the classes map directly to the file paths in which they are stored. As a result, there must only be one class per file. For example:
+
+Ext.util.Observable is stored in path/to/src/Ext/util/Observable.js
+Ext.form.action.Submit is stored in path/to/src/Ext/form/action/Submit.js
+MyCompany.chart.axis.Numeric is stored in path/to/src/MyCompany/chart/axis/Numeric.js
+path/to/src is the directory of your application's classes. All classes should stay under this common root and should be properly namespaced for the best development, maintenance and deployment experience.
+
+
+Creating classes
+----------------
+
+Ext.define(className, members, onClassCreated);
+className: The class name
+members is an object represents a collection of class members in key-value pairs
+onClassCreated is an optional function callback to be invoked when all dependencies of this class are ready, and the class itself is fully created.
+
+
+e.g.
+
+Ext.define('My.sample.Person', {
+    name: 'Unknown',
+
+    constructor: function(name) {
+        if (name) {
+            this.name = name;
+        }
+    },
+
+    eat: function(foodType) {
+        alert(this.name + " is eating: " + foodType);
+    }
+});
+
+var aaron = Ext.create('My.sample.Person', 'Aaron');
+    aaron.eat("Salad"); // alert("Aaron is eating: Salad");
+Note we created a new instance of My.sample.Person using the Ext.create() method. We could have used the new keyword (new My.sample.Person()). However it is recommended to get in the habit of always using Ext.create since it allows you to take advantage of dynamic loading.
+
+
+
+
+Configuration
+-------------
+
+In Ext JS 4, we introduce a dedicated config property that gets processed by the powerful Ext.Class pre-processors before the class is created. Features include:
+
+Configurations are completely encapsulated from other class members
+Getter and setter, methods for every config property are automatically generated into the class' prototype during class creation if the class does not have these methods already defined.
+An apply method is also generated for every config property. The auto-generated setter method calls the apply method internally before setting the value. Override the apply method for a config property if you need to run custom logic before setting the value. If apply does not return a value then the setter will not set the value. The following 4 methods are automatically created when using configs:
+
+
+getTitle – returns the current title
+setTitle – sets the title to a new value
+resetTitle – reverts the title to its default value (‘Window Title’)
+applyTitle – this is a template method that you can choose to define. It is called whenever setTitle is called.
+
+
+Statics
+-------
+
+Ext.define('Computer', {
+    statics: {
+        instanceCount: 0,
+        factory: function(brand) {
+            // 'this' in static methods refer to the class itself
+            return new this({brand: brand});
+        }
+    },
+
+    config: {
+        brand: null
+    },
+
+    constructor: function(config) {
+        this.initConfig(config);
+
+        // the 'self' property of an instance refers to its class
+        this.self.instanceCount ++;
+    }
+});
+
+var dellComputer = Computer.factory('Dell');
+var appleComputer = Computer.factory('Mac');
+
+alert(appleComputer.getBrand()); // using the auto-generated getter to get the value of a config property. Alerts "Mac"
+
+alert(Computer.instanceCount); // Alerts "2"
+
+
+
+
+Mixins
+------
+
+Mixins are really useful when a class needs to inherit multiple traits but can’t do so easily using a traditional single inheritance mechanism. For example, Ext.Windows is a draggable component, as are Sliders, Grid headers, and many other UI elements. Because this behavior crops up in many different places it’s not feasible to work the draggable behavior into a single superclass because not all of those UI elements actually share a common superclass. Creating a Draggable mixin solves this problem – now anything can be made draggable with a couple of lines of code.
+
+
+e.g.
+
+
+Ext.define('Ext.Window', {
+    extend: 'Ext.Panel',
+    requires: 'Ext.Tool',
+    mixins: {
+        draggable: 'Ext.util.Draggable'
+    },
+     
+    config: {
+        title: "Window Title"
+    }
+});
+
+
+//a simplified Draggable mixin
+Ext.define('Ext.util.Draggable', {
+    startDragging: function() {
+        console.log('started dragging');
+    }
+});
+
+
+
+var win = Ext.create('Ext.Window');
+win.startDragging(); //"started dragging"
+
+
+
+Prototype-based programming
+======================
+
+Prototype-based programming is a style of object-oriented programming in which behaviour reuse (known as inheritance) is performed via a process of cloning existing objects that serve as prototypes. This model can also be known as prototypal, prototype-oriented, classless, or instance-based programming. Delegation is the language feature that supports prototype-based programming.
+
+A fruit bowl serves as one example. A "fruit" object would represent the properties and functionality of fruit in general. A "banana" object would be cloned from the "fruit" object, and would also be extended to include general properties specific to bananas. Each individual "banana" object would be cloned from the generic "banana" object.
+
+Prototypal inheritance in JavaScript is described by Douglas Crockford as: you make prototype objects, and then … make new instances. Objects are mutable in JavaScript, so we can augment the new instances, giving them new fields and methods. These can then act as prototypes for even newer objects. We don't need classes to make lots of similar objects… Objects inherit from objects. What could be more object oriented than that?
+
+
+Object construction
+-------------------
+In prototype-based languages there are no explicit classes and objects inherit directly from other objects with which they are linked through a prototype property, called prototype in Self, proto in Io and __proto__ in JavaScript. There are two methods of constructing new objects: ex nihilo ("from nothing") object creation or through cloning an existing object. The former is supported through some form of object literal, declarations where objects can be defined at runtime through special syntax such as {...} and passed directly to a variable. While most systems support a variety of cloning, ex nihilo object creation is not as prominent.[4]
+
+In class-based languages, a new instance is constructed through a class's constructor function, a special function that reserves a block of memory for the object's members (properties and methods) and returns a reference to that block. An optional set of constructor arguments can be passed to the function and are usually held in properties. The resulting instance will inherit all the methods and properties that were defined in the class, which acts as a kind of template from which similar typed objects can be constructed.
+
+Systems that support ex nihilo object creation allow new objects to be created from scratch without cloning from an existing prototype. Such systems provide a special syntax for specifying the properties and behaviors of new objects without referencing existing objects. In many prototype languages there exists a root object, often called Object, which is set as the default prototype for all other objects created in run-time and which carries commonly needed methods such as a toString() function to return a description of the object as a string. One useful aspect of ex nihilo object creation is to ensure that a new object's slot (properties and methods) names do not have namespace conflicts with the top-level Object object. (In the JavaScript language, one can do this by using a null prototype, i.e. Object.create(null).)
+
+Cloning refers to a process whereby a new object is constructed by copying the behavior of an existing object (its prototype). The new object then carries all the qualities of the original. From this point on, the new object can be modified. In some systems the resulting child object maintains an explicit link (via delegation or resemblance) to its prototype, and changes in the prototype cause corresponding changes to be apparent in its clone.
+
+
+// Example of true prototypal inheritance style 
+// in JavaScript.
+
+// "ex nihilo" object creation using the literal 
+// object notation {}.
+var foo = {name: "foo", one: 1, two: 2};
+
+// Another "ex nihilo" object.
+var bar = {two: "two", three: 3};
+
+// Object.setPrototypeOf() is a method introduced in ECMAScript 2015.
+// For the sake of simplicity, let us pretend 
+// that the following line works regardless of the 
+// engine used:
+Object.setPrototypeOf(bar, foo); // foo is now the prototype of bar.
+
+// If we try to access foo's properties from bar 
+// from now on, we'll succeed. 
+bar.one // Resolves to 1.
+
+// The child object's properties are also accessible.
+bar.three // Resolves to 3.
+
+// Own properties shadow prototype properties
+bar.two; // Resolves to "two"
+bar.name; // unaffected, resolves to "foo"
+foo.name; // Resolves to "foo"
+This example in JS 1.8.5 + ( see http://kangax.github.com/es5-compat-table/ )
+
+var foo = {one: 1, two: 2};
+
+// bar.[[prototype]] = foo
+var bar = Object.create( foo );
+
+bar.three = 3;
+
+bar.one; // 1
+bar.two; // 2
+bar.three; // 3
+
+Delegation
+----------
+
+In prototype-based languages that use delegation, the language runtime is capable of dispatching the correct method or finding the right piece of data simply by following a series of delegation pointers (from object to its prototype) until a match is found. All that is required to establish this behavior-sharing between objects is the delegation pointer. Unlike the relationship between class and instance in class-based object-oriented languages, the relationship between the prototype and its offshoots does not require that the child object have a memory or structural similarity to the prototype beyond this link. As such, the child object can continue to be modified and amended over time without rearranging the structure of its associated prototype as in class-based systems. It is also important to note that not only data, but also methods can be added or changed. For this reason, some prototype-based languages refer to both data and methods as "slots" or "members".
+
+
+
+Digging Deeper
+---------------
+
+Ext JS 4 introduces 4 new classes to make all this magic work:
+Ext.Base – all classes inherit from Ext.Base. It provides basic low-level functionality used by all classes
+Ext.Class – a factory for making new classes
+Ext.ClassLoader – responsible for ensuring that classes are available, loading them if they aren’t on the page already
+Ext.ClassManager – kicks off class creation and manages dependencies
+These all work together behind the scenes and most of the time you won’t even need to be aware of what is being called when you define and use a class. The two functions that you’ll use most often – Ext.define and Ext.create – both call Ext.ClassManager under the hood, which in turn utilizes the other three classes to put everything together.
+The distinction between Ext.Class and Ext.Base is important. Ext.Base is the top-level superclass for every class ever defined – every class inherits from Ext.Base at some point. Ext.Class represents the class itself – every class you define is an instance of Ext.Class, and a subclass of Ext.Base. To illustrate, let’s say we created a class called MyClass, which doesn’t extend any other class:
+
+Ext.Base – all classes inherit from Ext.Base. It provides basic low-level functionality used by all classes
+Ext.Class – a factory for making new classes
+Ext.ClassLoader – responsible for ensuring that classes are available, loading them if they aren’t on the page already
+Ext.ClassManager – kicks off class creation and manages dependencies
+
+Ext.define('MyClass', {
+    someFunction: function() {
+        console.log('Ran some function');
+    }
+});
+The direct superclass for MyClass is Ext.Base because we didn’t specify that MyClass should extend anything else.
+
+
+This tree bases its hierarchy on the inheritance structure of our classes, and the root is always Ext.Base – that is, every class eventually inherits from Ext.Base. So every item in the diagram above is a subclass of Ext.Base, but every item is also an instance of Ext.Class. Classes themselves are instances of Ext.Class, which means we can easily modify the Class at a later time – for example mixing in additional functionality:
+
+
+//we can define some mixins at definition time
+Ext.define('MyClass', {
+    mixins: {
+        observable: 'Ext.util.Observable'
+    }
+});
+ 
+//it’s easy to add more later too
+MyClass.mixin('draggable', 'Ext.util.Draggable');
+
+
+
+EXT-JS Trees
+==========
+
+Assumptions and defaults
+-------------------------
+
+1) Tree Nodes are Model instances that are decorated with a NodeInterface which creates extra fields on the model if they do not exist to help maintain the tree state and UI. These fields are documented as config options in Ext.data.NodeInterface.
+2) Setting the rootVisible property to false visually removes the root node. By doing this, the root node will automatically be expanded
+3) A Tree Panel is similar to a Grid Panel in that it also expects an array of Ext.grid.column.Column configurations. The only difference is that a Tree Panel requires at least one column with an xtype of treecolumn.
+4) When columns are not defined the tree will automatically create one single treecolumn with a dataIndex set to 'text'. It also hides the headers on the tree. To show this header when using only a single column set the hideHeaders configuration to 'false'.
+5) Every node that is not a leaf node has an appendChild method which accepts a Node, or a config object for a Node as its first parameter, and returns the Node that was appended.
+6) Nodeinterface Fields are reserved names. Don't use reserved names for models unless you are intending to override a persistence field.
+7) Override the checked field to be persistenct if the tree is using the checkbox feature.
+8) Internally a tree only loads data in response to a node being expanded. An entire hierarchy can be loaded if the proxy retrieves a nested object containing the whole tree structure. To accomplish this, initialize the TreeStore's root node to 'expanded'.
+9) For all non-leaf nodes that do not have children, the server response MUST set the loaded property to true to avoid the proxy from having to attempt to load the children when the node is expanded.
+10) For the tree to read nested data, the Ext.data.reader.Reader(This is the reader config in the proxy) must be configured with a root property, so the reader can find nested data for each node (if a root is not specified, it will default to 'children'). This will tell the tree to look for any nested tree nodes by the same keyword, i.e., 'children'. If a root is specified in the config make sure that any nested nodes with children have the same name. Note that setting defaultRootProperty accomplishes the same thing.
+11) If you want the tree to be expanded by default, make sure that your server returns a JSON object that has the expanded property of NodeInterface set to true. Not doing this will leave expanded at its default of false and all rows will be collapsed on render.
+
+GCSS Error handling in Ext-JS
+-----------------------------
+
+1) Include GCSS.gx.common.message.ErrorController in your application. Throw error events to display errors encountered.
+2) Register a store exception listener for your store.
+3) create a name property and assign it a name for the store.
+4) from within the store exception listener, fire an error event from the application or the controller where the store exception listener is defined.
+	e.g. Itinerary.app.fireEvent('error', this, {
+			tgt: infoBox,
+			errorText: errorText
+		});
+
+If tgt is defined and is an instance of GCSS.gx.common.message.InlineInfoBox, the error will be shown in the inline box. If tgt is not defined then the error message will be displayed in a pop up window once the application is initialized.
+
+If using a Msg box to show the error, use GCSS.gx.common.message.MsgTpls.DEFAULT_TPL to format the message.
+
+e.g.
+
+var errorVals = {
+	helpdeskPhone: gcssProps.glap.helpdesk.phone,
+	helpdeskDsn: gcssProps.glap.helpdesk.dsn
+};
+Ext.Msg.show({
+	width: 400,
+	// TODO: Pass as config, or use the title of the HTML page.
+	title: 'GCSS-J War Reserves/PREPO Widget',
+	icon: Ext.Msg.ERROR,
+	msg: GCSS.gx.common.message.MsgTpls.DEFAULT_TPL.apply(errorVals) +
+			'<br><br>' +
+			GCSS.gx.common.message.MsgTpls.HELPDESK_TPL.apply(errorVals),
+	buttons: Ext.Msg.OK
+});
+
+Determining the numberOfElements that drives the InitializationController progress bar
+--------------------------------------------------------------------------------------
+1) GCSSSyncForm fires elementinitialized on afterrender
+2) GCSSMapForm fires elementinitialized on Ext.onReady during initComponent
+
+3) Any component that saves persistence data to OWF should fire elementinitialized via the app's fireElementIntializationEvent method upon a successful/unsuccessful loading of persistence data. Alternatively if a Model is using the GCSS.gx.common.OWFPrefsProxy, then have it relay the elemeninitialized event using the application.relayEvents method.
+
+e.g.
+
+this.control({
+			'#inputForm': {
+				afterrender: function (inputForm) {
+					var model = Ext.create('AS.model.Inputs');
+					me.getApplication().relayEvents(model.getProxy(), ['elementinitialized']);
+
+					inputForm.getForm().loadRecord(model);
+
+					AS.model.Inputs.load(OWF.getInstanceId(), {
+						success: function (record) {
+							if (record) {
+								inputForm.getForm().loadRecord(record);
+							}
+						}
+					});
+				}
+			},
+			........
+});			
+
+4) elementintialized event should be fired after a successful/unsuccessful loading of each store.
+
+Count the number of components under 3 and 4 and add 2 to account for 1) and 2) and that should be the numberOfElements that you have to initialize in your app. (See Note below. If we are accounting for BoundingBox initialization then we will have to increment the numberOfElements accordingly).
+Once the number of elements initialized equals the app.numberOfElements, the InitializationController sets app.initialized to true.
+
+Note: Sometimes the elementinitialized event can be fired from a mapping controller after a map bounding box has been initialized for the first time. An example of a widget that does this is the Passenger widget.
+The passenger widget invokes the GCSSApplication.hasMapWidgetInstance on Map View status change( i.e any time the map is panned or a new map is opened ) and uses the newMap parameter to have place marks automatically plotted on the just opened map. If you don't use this kind of implementation then the user will need to uncheck and check the Map check box to have it plot on to the new map.
+
+Best Practices
+--------------
+1) Define the proxy on the Model and not the Store
+2) Have a static mock data for testing until REST service is developed
+3) For input forms, always use a record with the form and use an OWF proxy on the record model. This way persistence will be very easy to implement.
+4) Saving the last valid record from a form will make it easier to look up the values captured by the input fields straight from the record instead of querying for the input component and getting its value. Saves the effort of having to define refs for each of the input fields whose values we are trying to extract.
+5) On exiting a widget, destroy all preferences that were saved and unplot everything from the map before closing. If enableClosingEvent is set to true on the application then first register all the sequence of events to be waited for before closing the widget by calling addWidgetClosingListener on the application as follows:
+
+e.g.
+		AS.app.addWidgetClosingListener("DeleteInputPrefs");
+		AS.app.addWidgetClosingListener("DeleteSyncStatePref");
+		AS.app.addWidgetClosingListener("DeleteMapStatePref");
+
+Then setup a widgetClosing event listener for the widget to delete input preferences and unplot from maps.
+
+e.g.
+
+		widgetClosing: function () {
+			var _this = this;
+			var onInputResult = function (widget) {
+				AS.app.removeWidgetClosingListener("DeleteInputPrefs");
+			};
+			var inputs = Ext.create('AS.model.Inputs');
+			var operation = Ext.create('Ext.data.Operation', {
+				action: 'destroy',
+				callback: onInputResult,
+				scope: _this
+			});
+			inputs.getProxy().destroy(operation, onInputResult, _this);
+
+			var onSyncResult = function () {
+				_this.application.removeWidgetClosingListener("DeleteSyncStatePref");
+			};
+			var syncform = Ext.getCmp('syncForm');
+			if (syncform) {
+				syncform.deleteState(onSyncResult, _this);
+			} else {
+				onSyncResult.call();
+			}
+
+			var onMapStateResult = function () {
+				_this.application.removeWidgetClosingListener("DeleteMapStatePref");
+			};
+			var mapForm = Ext.getCmp('mapForm');
+			if (mapForm) {
+				mapForm.deleteState(onMapStateResult, _this);
+			} else {
+				onMapStateResult.call();
+			}
+
+		}
+
+Widget Intents and oficial OWF channel names for GCSS-J
+=======================================================
+
+* Look in GCSS.gx.common.WidgetUtils
+	use GCSS.gx.common.WidgetUtils.retrieveOWFEventPayload for retrieving payload
+or
+
+* Use GCSS.Channels to publish and subscribe to a channel.
+
+
+
+Note on how property files used in js-lib-common are generated
+ ===============================================================
+ For dev profile
+ 1) They are first generated from property files found in GCSS_x86/safe/GCSSCommon/components/resources/gcsscommon-properties and created into a zip file.
+ 2) The are then unpacked in the build directory of GCSS_x86/owf/framework/components/wars/js-lib-common under properties.
+ 3) These unpacked property files are then used to filter the properties.js file in GCSS_x86/owf/framework/components/wars/js-lib-common/src/main/webapp/config
+ See also notes for US11334
+ 
+ 
+Functions for formatting widget output values according to GCSS-J Standards
+---------------------------------------------------------------------------
+
+Look at static functions defined in GCSS.gx.common.FormatUtils
+
+
+Tooltips
+---------
+
+Always apply tooltips after the component has been rendered.
+
+
+Implementing a GCSS-J Tree panel
+--------------------------------
+
+Use GCSS.gx.common.CollapsibleColumnTreeGrid for the tree panel. 
+
+For the columns use GCSS.gx.common.Column for the normal non tree columns. This class will properly format the column alignments, tooltips, and renderers for the columns.
+For tree columns use GCSS.gx.common.TreeColumn instead of a normal treecolumn to take advantaget of GCSS.gx.common.Column.initColumn static function to set up the renderers, alignment, and tooltips for the treecolumn just like it does for GCSS.gx.common.Column.
+
+For the actual grid to be used, extend from GCSS.gx.common.CollapsibleColumnTreeGrid and define your columns for the tree panel using the columns config. If you have nested columns, define them here too and set the staticColumns config to true so that the collapsible grid will configure the columns to be collapsible.
+
+
+Receiving broadcasts from other widgets
+---------------------------------------
+
+Use GCSS.gx.common.WidgetUtils.retrieveOWFEventPayload to handle messages that are broadcast to avoid listening to messages sent by the same widget.
+
+
+GCSS.gx.common.FormattedDisplayField
+====================================
+
+Use this component when using a form field label.
+
+This component will apply formatting to 
+
+string
+integer
+decimal
+date
+dateTime
+money
+longitude
+
+config values set for the type of data being displayed by the label.
+
+The component will also 
+
+1) take care of overflows if the label data is too big to fit
+2) apply tool tips to the label
+3) convert the label value to a link if needed
+
+The component also provides the ability to either hide an empty label or format it with a value provided by its emptyText config.
+
+
+GCSS.gx.common.Fieldset
+=======================
+
+This component will group input fields in a container. The component has markAsInvalid method that can be used to change the title of the input to show a red exclamation mark to alert the user that something is wrong in one of the components. Use this during validation.
+
+
+GCSS.gx.common.IntentsUtils
+===========================
+
+Use GCSS.gx.common.IntentsUtils for setting up intent listeners and setting up intents.
+Note: call OWF.notifyWidgetReady() after setting up the intent listener to notify other widgets that this widget is ready for interaction.
+
+
+GCSS.gx.common.TextField.blurOnEnterKeyPress
+============================================
+
+If using specialkey event to submit a form when a user presses Enter from a form field, make sure to use GCSS.gx.common.TextField.blurOnEnterKeyPress to prevent multiple submissions of the form if the Enter key is depressed for an extended period of time.
+
+A good idea would also be to blur the Apply button after it has been clicked once to avoid multiple submissions if it is pressed for an extended period as well.
+
+GCSS.gx.common.TextField
+========================
+
+Use a GCSS.gx.common.TextField when you want a text input form that has triggers. The different types of triggers and the tooltips for the triggers can be configured using the following configuration values:
+
+config: {
+		clearable: false,
+		clearableTooltip: false,
+		lookupTooltip: false,
+		lookup: false,
+		showAsterisk: true
+	}
+
+If the text field is to be used for a mandatory value, set the showAsterisk config to true to render a red asterix next to the text field's label.
+	
+In addition to the tooltips provided for each trigger, GCSS.gx.common.TextField will also add a tooltip for the input text value.
+
+On blur, GCSS.gx.common.TextField will trim the value of the input text field.
+
+GCSS.gx.common.DataTextField
+============================
+
+Use a GCSS DataTextField when you want to save an object of any value in a form. To return the string representation of the object that will be used for display in the Form's input field, define a renderer function  in the DataTextField configuration for the value object that this field is representing.
+
+In general to define a field for saving an object of anytype, override the valueToRaw and rawToValue methods of the Ext.form.field.Base class. These template methods are called from the setValue and getValue methods respectively. (See source code for Ext.form.field.Base class).
+
+GCSS.gx.supply.TreeViewContainerDragDrop
+========================================
+
+Use a GCSS.gx.supply.TreeViewContainerDragDrop object when setting up tree panels with drag and drop capability. The GCSS.gx.supply.TreeViewContainerDragDrop has a handler for onContainerDrop (see GCSS.gx.supply.ViewContainerDropZone) which will only allow appending of dragged nodes into the root of the drop zone.
+
+To use GCSS.gx.supply.TreeViewContainerDragDrop, define it as a plugin in the viewConfigs of the two tree panels that are to participate in the drag and drop operation.
+To adjust the panel to allow/disallow dragging and dropping, use enableDrag and enableDrop properties in the plugin object when defining the viewConfig for the tree panel.
+
+GCSS.DateField
+==============
+
+For date inputs in the form of d M Y using a calendar picker use, GCSS.DateField (xtype: gcssDateField). In addition to validating using a minValue and maxValue for the date field to restrict the dates that can be selected using the calendar picker, GCSS.DateField can also provide a date range validation if using the GCSSVTypes dateRange validator. If the maxRange is set on a toDate field then this validator will make sure that the number of days between the first date selected and the second date selected is within the maximum range.
+
+Quick way to extract all the form names from an Ext.js file
+============================================================
+$ sed -n '/name/{
+s/^[[:space:]]*//
+p
+}' Form.js
+
+
+KPP Logging in Widgets
+=================
+
+1) Notify Audit Service of a widget activation using AuditUtils.logActivation() functon which should be called on OWF.ready.
+2) Start time measurment using AuditUtilsInstance.logStartI() function which should be called just before a store containing data for a report grid makes a call to the back end to fetch data. Call this function before calling store.load() for example.
+
+	a) On the service side, call KPPUtils.logServiceStart to mark the beginning of processing of the request from the Ext-JS store to load the data. Put this static method call at the beginning of the REST endpoint to mark the beginning of processing the request to fetch the data.
+	b) If the data requires aggregation, call KPPUtils.logAggregateStart() method to mark the beginning of aggregation. This method call is put before any call to start aggregating data.
+	c) If the data required aggregation, call KPPUtils.logAggregateEnd() method to mark the end of aggregation. This method call is put right after the aggregated data is returned by the service.
+	d) Call KPPUtils.logServiceEnd to end of processing the request from the Ext-JS store to load the data. Put this static method call at the end of the REST endpoint just before the response is sent back to the client.
+3) End time measurement using AuditUtilsInstance.logEndI(runId) function which should be called after a store.load() completes successfully, usually in using the store's onload event handler. The runId should be extracted from the response that is returned.
+4) Call AuditUtils.logBeginRenderI() just before the results are rendered to the UI for the widget.
+5) Call AuditUtils.logRenderedI(runId) right after the results are rendered to the UI for the widget.
