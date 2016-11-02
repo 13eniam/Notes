@@ -643,14 +643,14 @@ e.g.
 
 negate numbers 1 to 10
 
-	negatedNumbers = -num for num in [1..10]
+	negatedNumbers = (-num for num in [1..10])
 	
 
 Find all divisors of 960
 
 isInteger = (x) -> num is Math.round(num)
 
-numsThatDivide960 = num for num in [0..960] when isInteger(960/num)
+numsThatDivide960 = (num for num in [0..960] when isInteger(960/num))
 
 
 List comprehensions are the consequence of a core part of CoffeeScript's philosophy: everything in CoffeeScript is an expression and every expression has a value. Loops return an array of their iteration values.
@@ -819,7 +819,7 @@ Properties attached directly to objects take precedence over prototype propertie
 e.g.
 	Classes/Raven.coffee
 	raven2 = new Raven()
-	raven2.quoth -> console.log "I'm my own kind of raven
+	raven2.quoth = -> console.log "I'm my own kind of raven
 	raven1.quoth() #I'm hungry
 	raven2.quoth() #I'm my own kind of raven
 	
@@ -839,7 +839,7 @@ e.g.
 	Classes/Tribble.coffee
 	
 	class Tribble
-		constructor ->
+		constructor: ->
 			@isAlive = true
 			Tribble.count++
 		
