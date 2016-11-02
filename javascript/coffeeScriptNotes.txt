@@ -30,6 +30,11 @@ To see the Javascript output of CoffeeScript on the command line do:
 coffee -p testbench.coffee
 
 
+CoffeeScript Interpolation
+--------------------------
+
+CoffeeScript's interpolation syntax is similar to Ruby's: "A#{expression}Z" is equivalent to 'A' + (expression) + 'Z'. Interpolations only work in double quoted strings.
+
 
 Lexical Scoping and Variable Safety
 -----------------------------------
@@ -155,7 +160,7 @@ throw "#{num} is not positive" unless num > 0
 Assigning a variable scope
 --------------------------
 
-To assign a scope do a variable, simple declare and assign a suitable value for the variable
+To assign a scope to a variable, simple declare and assign a suitable value for the variable
 
 e.g.
 
@@ -282,7 +287,7 @@ A splatted argument doesn't have to go at the end of an argument list. The Coffe
 
 sandwich = (beginning, middle..., end) -> ...
 
-Non splatted arguments always get in first. So, if sandwich is called with only two arguments, those will become beginning and end. Only when there are four or more arguments is there a middle. Splats soak up any and all extra arguments. Note: it only makes sense to have only one splatted argument in a given function, otherwise splats would have to duke it out over how to split the arguments within themselves.
+Non splatted arguments always get in first. So, if sandwich is called with only two arguments, those will become beginning and end. Only when there are three or more arguments is there a middle. Splats soak up any and all extra arguments. Note: it only makes sense to have only one splatted argument in a given function, otherwise splats would have to duke it out over how to split the arguments within themselves.
 
 It is worth mentioning that splats can be used to divvy up arrays on the fly without the use of a function.
 
@@ -482,14 +487,13 @@ e.g.
 
 	arr = ['a', 'c']
 	arr[1...1] = ['b'] #arr[1...1] is an empty range and [b] will be inserted at index 1. if arr[2...2] was used b would be inserted at 2
-	arr
-
-returns	
+	
+	arr returns	
+	
 	['a', 'b', 'c']	
 	
 
 Note: While negative indices work great for slicing, they completely fail for splicing. The trick of omitting the last index works fine with splicing just as in slicing though.
-
 
 
 Iterating over Collections
@@ -526,6 +530,10 @@ To iterate over the values of an array use:
 	for value in array
 		#do something with the value
 		
+    for value, index in array
+    	#do something with the value and index
+    	
+		
 We could also use the object iteration syntax on an array if we wanted to and that will return everything in the array and not just the indices and the corresponding values at those indices.
 
 Both styles of for loops can be followed by a when clause that skips over the loop iterations when the given condition fails. 
@@ -535,7 +543,7 @@ e.g.
 	for key, func of obj when typeof func is 'function'
 		func()
 
-The above snipped will execute all the object properties that are methods i.e. functions.
+The above snippet will execute all the object properties that are methods i.e. functions.
 
 The above example could have also been written using continue unless as
 
@@ -690,7 +698,7 @@ You can also nest array patterns and object patterns inside of each other
 
 e.g.
 
-	{languages: [favorireLanguage, otherLanguages...]} = resume
+	{languages: [favoriteLanguage, otherLanguages...]} = resume
 	
 This code translates to take resume.languages, assign first entry to favoriteLanguage and the rest to otherLanguages.
 
@@ -842,7 +850,7 @@ e.g.
 			@isAlive = false
 			
 		#Class level properties
-		@count = 0
+		@count: 0
 		@makeTrouble: -> console.log ('Trouble!' for i in [1..@count]).join(' ')
 		
 
@@ -880,7 +888,7 @@ JavaScript supports inheritance through something called "prototype chains". Let
 a = new A()
 console.log a.flurb()
 
-First the runtime checks to see if the particular A instance a has a property flurb: If not, it checks A's prototype B, and if that is still no dice, it checks B's prototype C. If C has no flurb, then the runtime checks the default object prototype that is the prototype of {}. So, every prototype inherits fro {} but there maybe other prototypes in between.
+First the runtime checks to see if the particular A instance a has a property flurb: If not, it checks A's prototype B, and if that is still no dice, it checks B's prototype C. If C has no flurb, then the runtime checks the default object prototype that is the prototype of {}. So, every prototype inherits from {} but there maybe other prototypes in between.
 
 CoffeeScript's extend keyword makes it easy to inherit from an object's prototype.
 
@@ -888,7 +896,7 @@ e.g.
 
 	class B extends A
 	
-Here B's prototype inherits from A's prototype. In addition, A's class-level properties are copied over to B. So if we left the definition of B alone, B instances would hae exactly the same behavior as A instances. There is one exception: B.name would be 'B', while A.name would be 'A' - name is a special property.
+Here B's prototype inherits from A's prototype. In addition, A's class-level properties are copied over to B. So if we left the definition of B alone, B instances would have exactly the same behavior as A instances. There is one exception: B.name would be 'B', while A.name would be 'A' - name is a special property.
 
 Now lets look at a slightly deeper example:
 
@@ -963,7 +971,7 @@ There are a number of differences between JavaScript's switch and CoffeeScript's
 	a = return x
 so the compiler won't allow it as a possibility.
 
-CoffeeScript also makes several syntactic changes. For example when is used instead of case and esle instead of default. A single when can be followed by several potential matches delimited by commas. Also, instead of :, those match clauses are separated from their outcomes by indentation or then.
+CoffeeScript also makes several syntactic changes. For example when is used instead of case and else instead of default. A single when can be followed by several potential matches delimited by commas. Also, instead of :, those match clauses are separated from their outcomes by indentation or then.
 
 e.g.
 
