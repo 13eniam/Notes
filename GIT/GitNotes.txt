@@ -158,7 +158,17 @@ git log -p shows the difference introduced in each commit
 
 git log -2 limits the output to the last two entries
 
-git log --stat to see abbreviated stats for each commit
+git log --author="Beniam" 
+	will show commits made by the author Beniam only. To filter by committer using --committer instead of --author
+
+git log -p 8a608a7^1..8a608a7 
+	will show only commits made in 8a608a7
+
+Showing git output with modified files list
+--------------------------------------------
+git log --stat
+git log --name-only
+git log --name-status
 
 git log --graph This options adds a nice little ASCII graph showing your branch and merge history
 
@@ -188,13 +198,45 @@ git log -- <path/filename>
 
 git log -p 
 	will show a diff of all the commits.
+	
+
+To limit using log revisions checkout the help on gitrevisions:
+
+git help gitrevisions
+
+e.g. to show all commits upto a certain revision do:
+
+git log <rev>..
+
+Where <rev> is in a format as described in gitrevisions
+
+e.g. to show all commits in a revision range do:
+
+git log <rev1>..<rev2>
+
+Include commits that are reachable from <rev2> but exclude those that are reachable from <rev1>. When either <rev1> or <rev2> is omitted, it defaults to HEAD.	
 
 
 Diffing using git (equivalent of svn diff)
 ------------------------------------------
 
-git diff HEAD <path>
+To compare changes in your working directory with the last committed revision do:
 
+git diff HEAD <path> 
+
+
+To compare changes you just committed to the previous revision or version do:
+
+git diff HEAD~1
+
+The above command will compare what is in your working directory assuming there have been no changes since your last commit with the previous version or revision. i.e. if you just committed, the version in your working directory will be pointed by HEAD. Comparing with HEAD~1 shows the changes that you just committed.
+
+
+To diff two branches for changes e.g. feature/CORE-4630 and develop do:
+
+git diff feature/CORE-4630 develop
+
+The above command is useful when you want to compare a certain branch for addition or changes before merging or to see if all your merges made it into the branch i.e. when there is no difference between the branches after the merge.
 
 Undoing things e.g. changing commit message, and adding files to a commit
 -------------------------------------------------------------------------
@@ -229,6 +271,33 @@ ok lets say you have pulled a file back from the staging area back to the workin
 
 git checkout -- <file-name>
 
+
+Updating a commit message of something that you have already committed
+----------------------------------------------------------------------
+
+To update the commit message of something you have committed, used git rebase -i HEAD~X where X is the number of commits back from head that you want to modify. This will bring up the last X commits and will allow you to update the commits. 
+
+To start editing do:
+
+git commit --amend
+
+This will bring up the editor with the commits. To update the commit use -e or modify the commit lines prefixed with pick and change it to edit and press enter or if you are in vim save and close. This will fire up another editor session and let you edit the commits. Once you are done editing the commits save and exit from vim.
+
+To finish your rebase do:
+
+git rebase --continue
+
+
+Cherry-Picking commits
+----------------------
+
+Scenario: You checkout branch A and B. You are supposed to be working in branch B but checkout branch A accidentally and you do all your work in branch A and commit. Then you realize all the work in your last commit should have been in branch B. Oh No what the hell! No worries git cherry-pick can solve that problem by letting you selectively apply commits even from another branch! Therefore do the following:
+
+git checkout B
+git cherry-pick <commit-id fromA>
+
+
+That will apply the commit-id in branch A onto branch B.
 
 
 Working with Remotes
@@ -325,9 +394,6 @@ git remote show origin
 This command shows which branch is automatically pushed to when you run git push while on certain branches. It also shows you which remote branches on the server you don’t yet have, which remote branches you have that have been removed from the server, and multiple local branches that are able to merge automatically with their remote-tracking branch when you run git pull.
 
 
-
-
-
 Creating a new Branch
 -----------------------
 
@@ -349,16 +415,32 @@ Creating and Switching to a branch in one command
 
 git checkout -b <branch-name>
 
+To Create and Switch to a branch and to have it track a remote branch
+---------------------------------------------------------------------
+
+git checkout -b <branch-name> -t <remote-name/branch>
+
 
 Ways of displaying branches
 ---------------------------
 
-git log --oneline --decorate
+git log --oneline --decorate (decorate will add extra information about the commit like tagging and when the branch was created)
+
+if you want to look at all commits containing the string 4930 that have not been merged (i.e. commits that have a single parent) do:
+
+git log --oneline --decorate --no-merges --grep=4930
+
+The above command will show all the commits since that branch was started that have not been merged yet.
+
 
 
 To see a graphical output do:
 
 git log --oneline --decorate --graph --all
+
+
+
+git log --pretty=format:'%h : %s' --graph
 
 
 
@@ -369,11 +451,15 @@ To merge branches switch to the branch that you merge into and then do:
 
 git merge <branch-name>
 
-If there is a conflict, git will pause the merge until the conflict is resolved. You can look at the conflicted file by using git status
+If there is a conflict, git will pause the merge until the conflict is resolved. You can look at the conflicted file by using git status. To resolve conflicts use your IDE and you can manually select and discard sections of the marked text. Important! remove all conflict text markers before proceeding to mark it as resolved or you will included those markers in your file and will cause your code to fail. 
 
 Once you resolve the conflict, stage the file that was in conflict to resolve it.
 
 git add <resolved-file>
+
+If you have multiple files use:
+
+git add .
 
 
 Branch Management
@@ -389,6 +475,8 @@ The branch that has the * prefix will be the branch that you have currently chec
 
 	git branch -v
 	
+	To find out the point where the branch was created, do git log --oneline --decorate --graph -all, find the commit point and trace it back.
+	
 * To see which branches you have merged to your current branch do:
 
 	git branch --merged
@@ -403,7 +491,7 @@ The branch that has the * prefix will be the branch that you have currently chec
 “ORIGIN” IS NOT SPECIAL
 -----------------------
 
-Just like the branch name “master” does not have any special meaning in Git, neither does “origin”. While “master” is the default name for a starting branch when you run git init which is the only reason it’s widely used, “origin” is the default name for a remote when you run git clone. If you run git clone -o booyah instead, then you will have booyah/ master as your default remote branch.
+Just like the branch name “master” does not have any special meaning in Git, neither does “origin”. While “master” is the default name for a starting branch when you run git init which is the only reason it’s widely used, “origin” is the default name for a remote when you run git clone. If you run git clone -o booyah instead, then you will have booyah/master as your default remote branch.
 
 
 Pushing
@@ -415,6 +503,10 @@ If you have a branch named serverfix that you want to work on with others, you c
 
  git push <remote> <branch>
  
+ e.g. 
+ 	git push origin review
+ 	
+ 	This will push the local branch called review to the remote branch pointed by origin.
  
 To merge this work into your current working branch, you can run:
 
@@ -424,7 +516,7 @@ If you want your own serverfix branch that you can work on, you can base it off 
 
 	git checkout -b serverfix origin/serverfix
 	
-This gives you a local branch that you can work on that starts where ori- gin/serverfix is.
+This gives you a local branch that you can work on that starts where origin/serverfix is.
 
 
 Tracking Branches
@@ -455,6 +547,61 @@ To see what tracking branches you have set up, you can use the -vv option to git
 Ahead means we have commits which we haven't pushed out to the servers.
 Behind means there are commits on the server that we haven't merged in yet.
 
+Untracking a remote Branch
+--------------------------
+
+To have your local branch stop tracking a remote branch do:
+
+git branch --unset-upstream
+
+
+Making a local branch track an upstream branch 
+----------------------------------------------
+
+e.g.
+
+	lets say you create a local branch as follows:
+	
+	git branch feature/CORE-1234
+	git checkout feature/CORE-1234
+	
+	you do some work and commit things but when you check the tracking info for your branch doing:
+	
+	git branch -vv
+	
+	[beniam.haile@bhaile-mbp ~/Documents/mygithub/Notes/javascript]
+	$ git branch -vv
+	  develop                     ce9466d [origin/develop: ahead 2] develop/Commit 4
+	  feature/CORE-1234           c9e1e1d Commit 5
+	* feature/CORE-1234-design-v1 8a2d615 Second commit to design-1 branch
+	  master                      7d4116a [origin/master] Adding GIT and Javascript notes.
+	
+	you see that your local branch is not tracking any upstream remote branches. To have it tracking a remote upstream branch do:
+	
+	git push --set-upstream origin feature/CORE-1234-design-v1 (IMPORTANT!: commit your code before pushing. Make sure nothing is in your working area when you do git status -s)
+
+	[beniam.haile@bhaile-mbp ~/Documents/mygithub/Notes/javascript]
+	$ git push --set-upstream origin feature/CORE-1234-design-v1
+	Counting objects: 8, done.
+	Delta compression using up to 8 threads.
+	Compressing objects: 100% (8/8), done.
+	Writing objects: 100% (8/8), 726 bytes | 0 bytes/s, done.
+	Total 8 (delta 6), reused 0 (delta 0)
+	To https://github.com/13eniam/Notes
+	 * [new branch]      feature/CORE-1234-design-v1 -> feature/CORE-1234-design-v1
+	Branch feature/CORE-1234-design-v1 set up to track remote branch feature/CORE-1234-design-v1 from origin.
+
+	
+	now doing git branch -vv you will see:
+	
+	[beniam.haile@bhaile-mbp ~/Documents/mygithub/Notes/javascript]
+	$ git branch -vv
+	* develop                     ce9466d [origin/develop: ahead 2] develop/Commit 4
+	  feature/CORE-1234           c9e1e1d Commit 5
+	  feature/CORE-1234-design-v1 8a2d615 [origin/feature/CORE-1234-design-v1] Second commit to design-1 branch
+	  master   
+	
+	
 Pulling
 -------
 
@@ -551,3 +698,85 @@ If you follow that guideline, you’ll be fine. If you don’t, people will hate
 If you treat rebasing as a way to clean up and work with commits before you push them, and if you only rebase commits that have never been available publicly, then you’ll be fine. If you rebase commits that have already been pushed publicly, and people may have based work on those commits, then you may be in for some frustrating trouble, and the scorn of your teammates.
 
 The conclusion is rebase local changes you’ve made but haven’t shared yet before you push them in order to clean up your story, but never rebase anything you’ve pushed somewhere.
+
+
+
+
+
+
+More Rebasing examples
+======================
+
+https://blog.pivotal.io/labs/labs/git-rebase-onto
+
+
+The three argument form of git rebase --onto
+--------------------------------------------
+
+
+Say there is a branch ‘topicA’ that diverges from master at some point:
+
+A--B--C--D--E master
+
+     F--G--H topicA
+Let’s also say that someone else has branched from topicA to create topicB, and added more commits:
+
+A--B--C--D--E master
+
+     F--G--H topicA
+
+             I--J--K--L--M topicB
+This is an example of a real-world case I came across, where topicA had only a couple very large commits that were hard to digest and could have been split into many smaller commits. topicB was created as a continuation of the work done on topicA.
+
+I checked out my own local copy of topicA, and through much interactive rebasing and prodigious use of git add -e, I was able to split topicA into smaller commits, making topicC:
+
+A--B--C--D--E master
+   |
+   | F--G--H topicA
+   |
+   |         I--J--K--L--M topicB
+   |
+   N--O--P--Q--R--S--T--U--V--W topicC
+I talked with the person that made topicA and we agreed that my branch topicC should take the place of topicA. But what to do about the work that was done on topicB?
+
+The operation that we wanted to do is: make topicC the new base of topicB, cutting it at the point topicB diverged from topicA, which looks like:
+
+A--B--C--D--E master
+   |
+   | F--G--H topicA
+   |
+   |         I--J--K--L--M topicB
+
+     N--O--P--Q--R--S--T--U--V--W--I'--J'--K'--L'--M' topicC
+The five commits from topicB (I through M), get played on top of topicC, starting from where topicB diverged from topicA, to create I’, J’, K’, L’, and M’.
+
+The command to do this is:
+
+git rebase --onto topicC topicA topicB
+Where topicC is the newbase, topicA is the oldbase, and topicB is the reference for what HEAD of topicC will become.
+
+
+
+Git Tags
+--------
+https://git-scm.com/book/en/v2/Git-Basics-Tagging
+
+
+To list tags do:
+
+git tag
+
+or
+
+git tag -l
+
+To list the tags sorted use --sort option with the sort key provided
+
+e.g.
+
+git tag --sort 'version:refname'
+
+To see what was committed in a tag do:
+
+git show 1.11.31
+
